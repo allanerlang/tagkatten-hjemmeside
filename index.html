@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Katten på Taget</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <main class="page">
+        <header class="hero">
+            <h1 class="site-title">Katten på Taget</h1>
+            <p class="sunset-tracker">
+                Solnedgang i aften · <span id="sunset-time">Henter...</span>
+                <span class="sunset-weather" id="sunset-weather" hidden>
+                    <span class="weather-icon" id="weather-icon" aria-hidden="true"></span>
+                    <span id="weather-label"></span>
+                </span>
+            </p>
+        </header>
+
+        <section class="playlist" aria-label="Spotify playliste">
+            <iframe
+                src="https://open.spotify.com/embed/playlist/7LhjmBWw6e0DSkPuYn06Od?utm_source=generator"
+                width="100%"
+                height="352"
+                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                loading="lazy"
+                title="Spotify playliste">
+            </iframe>
+        </section>
+
+        <section class="lyrics" aria-label="Sange">
+            <a class="lyric" href="https://hojskolesangbogen.dk/om-sangbogen/historier-om-sangene/s/stille-hjerte-sol-gaar-ned-aften">
+                <span class="lyric-title">Stille, hjerte, sol går ned</span>
+                <span class="lyric-artist">Jeppe Aakjær, 1912</span>
+            </a>
+            <a class="lyric" href="https://hojskolesangbogen.dk/om-sangbogen/historier-om-sangene/j-l/lyse-naetter">
+                <span class="lyric-title">Lyse nætter</span>
+                <span class="lyric-artist">Alberte Winding, 1991</span>
+            </a>
+        </section>
+
+        <figure class="solkat">
+            <img src="solkat.png" alt="En kat der ligger i solen på et tag med udsigt over København" loading="lazy">
+        </figure>
+    </main>
+
+    <script>
+        const lat = 55.6761;
+        const lng = 12.5683;
+
+        const WEATHER_ICONS = {
+            clear: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>',
+            partly: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M18 10h-1.26A8 8 0 1 0 9 18h9a5 5 0 0 0 0-10z"/></svg>',
+            cloudy: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M18 10h-1.26A8 8 0 1 0 7.5 17.5H18a5 5 0 1 0 0-7.5z"/></svg>',
+            fog: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M4 14h16M4 18h10M6 10h14"/></svg>',
+            rain: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M18 10h-1.26A8 8 0 1 0 7.5 17.5H18a5 5 0 1 0 0-7.5z"/><path d="M8 19v2M12 19v2M16 19v2"/></svg>',
+            snow: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M18 10h-1.26A8 8 0 1 0 7.5 17.5H18a5 5 0 1 0 0-7.5z"/><circle cx="8" cy="20" r="1" fill="currentColor"/><circle cx="12" cy="20" r="1" fill="currentColor"/><circle cx="16" cy="20" r="1" fill="currentColor"/></svg>',
+            storm: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M18 10h-1.26A8 8 0 1 0 7.5 17.5H18a5 5 0 1 0 0-7.5z"/><path d="M13 17l-3 5h4l-2 4"/></svg>'
+        };
+
+        function weatherFromCode(code) {
+            if (code === 0) return { label: 'Klart', icon: 'clear' };
+            if (code === 1) return { label: 'Let skyet', icon: 'partly' };
+            if (code === 2) return { label: 'Delvist overskyet', icon: 'partly' };
+            if (code === 3) return { label: 'Overskyet', icon: 'cloudy' };
+            if (code === 45 || code === 48) return { label: 'Tåge', icon: 'fog' };
+            if (code >= 51 && code <= 67) return { label: 'Regn', icon: 'rain' };
+            if (code >= 71 && code <= 77) return { label: 'Sne', icon: 'snow' };
+            if (code >= 80 && code <= 82) return { label: 'Byger', icon: 'rain' };
+            if (code >= 85 && code <= 86) return { label: 'Snebyger', icon: 'snow' };
+            if (code >= 95) return { label: 'Torden', icon: 'storm' };
+            return { label: 'Ukendt', icon: 'partly' };
+        }
+
+        function nearestHourIndex(times, targetMs) {
+            let bestIdx = 0;
+            let bestDiff = Infinity;
+            for (let i = 0; i < times.length; i++) {
+                const diff = Math.abs(new Date(times[i]).getTime() - targetMs);
+                if (diff < bestDiff) {
+                    bestDiff = diff;
+                    bestIdx = i;
+                }
+            }
+            return bestIdx;
+        }
+
+        async function loadSunset() {
+            const timeEl = document.getElementById('sunset-time');
+            const weatherEl = document.getElementById('sunset-weather');
+            const iconEl = document.getElementById('weather-icon');
+            const labelEl = document.getElementById('weather-label');
+
+            try {
+                const [sunRes, weatherRes] = await Promise.all([
+                    fetch(`https://api.sunrise-sunset.org/json?lat=${lat}&lng=${lng}&formatted=0`),
+                    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&hourly=weather_code&timezone=Europe%2FCopenhagen&forecast_days=2`)
+                ]);
+
+                const sunData = await sunRes.json();
+                const weatherData = await weatherRes.json();
+                const sunsetDate = new Date(sunData.results.sunset);
+
+                timeEl.textContent = sunsetDate.toLocaleTimeString('da-DK', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                });
+
+                const idx = nearestHourIndex(weatherData.hourly.time, sunsetDate.getTime());
+                const { label, icon } = weatherFromCode(weatherData.hourly.weather_code[idx]);
+
+                iconEl.innerHTML = WEATHER_ICONS[icon];
+                labelEl.textContent = label;
+                weatherEl.hidden = false;
+                weatherEl.setAttribute('aria-label', `Vejr ved solnedgang: ${label}`);
+            } catch (error) {
+                console.error('Fejl ved hentning af solnedgang/vejr:', error);
+                timeEl.textContent = 'Kunne ikke hentes';
+            }
+        }
+
+        loadSunset();
+    </script>
+</body>
+</html>
