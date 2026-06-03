@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#b8c8ea">
     <title>Katten på Taget</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,650&family=Source+Serif+4:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="preload" href="fonts/sourceserif4-400.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="preload" href="fonts/fraunces-600.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="fonts.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -27,18 +27,19 @@
             </div>
         </header>
 
-        <section class="playlist" aria-label="Spotify playliste">
-            <iframe
-                src="https://open.spotify.com/embed/playlist/7LhjmBWw6e0DSkPuYn06Od?utm_source=generator"
-                width="100%"
-                height="352"
-                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                loading="lazy"
-                title="Spotify playliste">
-            </iframe>
-        </section>
+        <div class="music">
+            <section class="playlist" aria-label="Spotify playliste">
+                <iframe
+                    src="https://open.spotify.com/embed/playlist/7LhjmBWw6e0DSkPuYn06Od?utm_source=generator"
+                    width="100%"
+                    height="352"
+                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                    loading="lazy"
+                    title="Spotify playliste">
+                </iframe>
+            </section>
 
-        <section class="lyrics" aria-label="Sange">
+            <section class="lyrics" aria-label="Sange">
             <a class="lyric" href="https://hojskolesangbogen.dk/om-sangbogen/historier-om-sangene/s/stille-hjerte-sol-gaar-ned-aften">
                 <span class="lyric-title">Stille, hjerte, sol går ned</span>
                 <span class="lyric-artist">Jeppe Aakjær, 1912</span>
@@ -51,7 +52,8 @@
                 <span class="lyric-title">Svantes lykkelige dag</span>
                 <span class="lyric-artist">Benny Andersen, 1974</span>
             </a>
-        </section>
+            </section>
+        </div>
 
         <figure class="solkat">
             <img src="solkat.png" alt="En kat der ligger i solen på et tag med udsigt over København" loading="lazy">
@@ -278,7 +280,7 @@
             if (now >= sunsetMs) {
                 labelEl.textContent = 'Solen gik ned kl.';
                 timeEl.textContent = timeStr;
-                subEl.textContent = 'Solen er nede. Katten er stadig på taget.';
+                subEl.textContent = 'Solen er nede.\nKatten er stadig på taget.';
             } else {
                 labelEl.textContent = 'Solnedgang i aften';
                 timeEl.textContent = timeStr;
